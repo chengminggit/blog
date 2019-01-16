@@ -1,11 +1,14 @@
 const {db} = require("../Schema/config.js")
+//通过db对象创建操作article数据库的模型对象
 const ArticleSchema = require("../Schema/article.js")
+const Article = db.model("articles",ArticleSchema)
 //取用户的Schema，为了拿到操作users集合的实例对象
 const UserSchema = require("../Schema/user.js")
 const User = db.model("users",UserSchema)
 
-//通过db对象创建操作article数据库的模型对象
-const Article = db.model("articles",ArticleSchema)
+
+const CommentSchema = require("../Schema/comment.js")
+const Comment = db.model("comments",CommentSchema)
 
 //返回文章发表页
 exports.addPage = async (ctx) => {
@@ -29,12 +32,19 @@ exports.add = async ctx => {
     const data = ctx.request.body;
     //添加文章的作者
     data.author = ctx.session.userid;
+    data.commentNum = 0;
 
     await new Promise((resolve, reject) => {
         new Article(data).save((err,data) => {
             if(err){
                 return reject(err);
             }
+            //更新用户文章计数
+            User.update({_id:data.author},{$inc:{articleNum:1}},err => {
+                if(err){
+                    return console.log(err)
+                }
+            })
             resolve(data)
         })
     })
@@ -60,8 +70,8 @@ exports.getList = async ctx => {
     const data = await Article
         .find()
         .sort("-created")
-        .skip(5 * --page)
-        .limit(5)
+        .skip(2 * --page)
+        .limit(2)
         .populate({
             path:"author",
             select:"username _id avatar"
@@ -69,7 +79,6 @@ exports.getList = async ctx => {
         .then(data => data)
         .catch(err => console.log(err))
 
-    console.log(data,"4545")
     await ctx.render("index.pug",{
         session:ctx.session,
         title:"追逐的博客",
@@ -77,3 +86,38 @@ exports.getList = async ctx => {
         maxNum
     })
 }
+
+//文章详情
+exports.details = async ctx => {
+    //取动态路由里的id
+    const _id = ctx.params.id;
+
+    //查找文章数据
+    const article = await Article
+        .findById(_id)
+        .populate("author","username")
+        .then(data => data)
+
+
+    //查找跟当前文章关联的所有评论
+    const comment = await Comment
+        .find({article:_id})
+        .sort("-created")
+        .populate("from","username avatar")
+        .then(data => data)
+        .catch(err => {
+            console.log(err)
+        })
+
+    console.log(ctx.session)
+
+
+    await ctx.render("article.pug",{
+        title:article.title,
+        article,
+        comment,
+        session:ctx.session,
+
+    })
+}
+
