@@ -1,15 +1,18 @@
 const {Schema} = require("./config.js")
 const ObjectId = Schema.Types.ObjectId
 
-const ArticleSchema = new Schema({
-    title:String,
+const CommentSchema = new Schema({
     content:String,
-    author:{
+    //关联用户表
+    from:{
         type:ObjectId,
         ref:"users"
-    },//关联users的表
-    tips:String,
-    commentNum:Number
+    },
+    //关联article集合
+    article:{
+        type:ObjectId,
+        ref:"articles"
+    }
 },{
     versionKey:false,
     timestamps:{
@@ -18,4 +21,4 @@ const ArticleSchema = new Schema({
 })
 
 
-module.exports = ArticleSchema;
+module.exports = CommentSchema;
