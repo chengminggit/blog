@@ -35,8 +35,8 @@ app.use(body())
 app.use(static(join(__dirname,"public")));
 
 //配置视图模板
-app.use(views(join(__dirname,"views"),{
-    extensions:'pug'
+app.use(views(join(__dirname,"views"), {
+    extension:'pug'
 }));
 
 
@@ -48,6 +48,39 @@ app.listen(3000, () => {
     console.log("项目启动成功，监听在3000端口")
 })
 
+
+//创建管理员用户，如果管理员用户已经存在则返回
+{
+    const {db} = require("./Schema/config.js")
+    const UserSchema = require("./Schema/user.js")
+    const encrypt = require("./util/encrypt.js")
+    const User = db.model("users",UserSchema)
+
+    User
+        .find({username:"admin"})
+        .then(data => {
+            if(data.length === 0){
+                //管理员不存在 创建
+                new User({
+                    username:"admin",
+                    password:encrypt("admin"),
+                    role:666,
+                    commentNum:0,
+                    articleNum:0
+                })
+                .save()
+                .then(data => {
+                    console.log("管理员用户名admin 密码admin")
+                })
+                .catch(err => {
+                    console.log("管理员账号检查失败")
+                })
+            }else{
+                //在控制台输出
+                console.log("管理员用户名admin 密码admin")
+            }
+        })
+}
 
 
 
