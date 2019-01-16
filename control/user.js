@@ -91,6 +91,34 @@ exports.login = async ctx => {
                 status:"密码不正确，登录失败"
             })
         }
+
+        //让用户在他的cookie里设置username password加密后的密码权限
+        ctx.cookies.set("username",username,{
+            domain:"localhost",
+            path:"/",
+            maxAge:36e5,
+            httpOnly:true,//true不让客户端能访问这个cookie
+            overwrite:false,
+            signed:true
+        })
+
+        //用户在数据库的id
+        ctx.cookies.set("userid",data[0]._id,{
+            domain:"localhost",
+            path:"/",
+            maxAge:36e5,
+            httpOnly:true,//true不让客户端能访问这个cookie
+            overwrite:false,
+            signed:true
+        })
+
+        ctx.session = {
+            username,
+            userid:data[0]._id,
+            avatar:data[0].avatar
+        }
+
+
         //登录成功
         await ctx.render("isOk.pug",{
             status:"登录成功"
@@ -101,4 +129,30 @@ exports.login = async ctx => {
             status:"登录失败"
         })
     })
+}
+
+//确定用户登录状态 保持用户状态
+exports.keepLog = async (ctx, next) => {
+    if(ctx.session.isNew){//session没有
+        if(ctx.cookies.get("username")){
+            ctx.session = {
+                username:ctx.cookies.get("username"),
+                userid:ctx.cookies.get("userid")
+            }
+        }
+    }
+    await next()
+}
+
+//用户退出中间件
+exports.logout = async ctx => {
+    ctx.session = null;
+    ctx.cookies.set("username",null,{
+        maxAge:0
+    })
+    ctx.cookies.set("userid",null,{
+        maxAge:0
+    })
+    //在后台做重定向到根
+    ctx.redirect("/")
 }
