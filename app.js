@@ -5,12 +5,28 @@ const router = require('./routers/router.js');
 const logger = require('koa-logger');
 const body = require('koa-body');
 const {join} = require('path');
+const session = require('koa-session');
 
 //生成Koa实例
 const app = new Koa;
 
+app.keys = ["追逐"];
+
+//session的配置对象
+const CONFIG = {
+    key:"SID",
+    maxAge:36e5,
+    overwrite:true,
+    httpOnly:true,
+    signed:true,
+    rolling:true
+}
+
 //注册日志模块
 app.use(logger());
+
+//注册session
+app.use(session(CONFIG,app))
 
 //配置koa-body处理POST请求数据
 app.use(body())
