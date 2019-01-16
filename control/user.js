@@ -11,7 +11,6 @@ exports.reg = async ctx => {
     const user = ctx.request.body
     const username = user.username;
     const password = user.password;
-    console.log(username,password);
 
     await new Promise((resolve, reject) => {
         //去users数据库查询
@@ -28,7 +27,9 @@ exports.reg = async ctx => {
             //保存到数据库之前需要先加密
             const _user = new User({
                 username,
-                password:encrypt(password)
+                password:encrypt(password),
+                commentNum:0,
+                articleNum:0
             })
             _user.save((err,data) => {
                 if(err){
@@ -109,13 +110,14 @@ exports.login = async ctx => {
             maxAge:36e5,
             httpOnly:true,//true不让客户端能访问这个cookie
             overwrite:false,
-            signed:true
+            signed:true,
         })
 
         ctx.session = {
             username,
             userid:data[0]._id,
-            avatar:data[0].avatar
+            avatar:data[0].avatar,
+            role:data[0].role
         }
 
 

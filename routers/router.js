@@ -2,6 +2,9 @@ const Router = require("koa-router");
 //拿到操作user表的逻辑对象
 const user = require("../control/user.js")
 const article = require("../control/article.js")
+const comment = require("../control/comment.js")
+const admin = require("../control/admin.js")
+
 const router = new Router();
 
 //设计主页
@@ -34,5 +37,23 @@ router.post("/article",user.keepLog,article.add)
 
 //文章列表分页路由
 router.get("/page/:id",article.getList)
+
+//文章详情页 路由
+router.get("/article/:id",user.keepLog,article.details)
+
+//发表评论
+router.post("/comment",user.keepLog,comment.save)
+
+//文章 评论 头像上传
+router.get("/admin/:id",user.keepLog,admin.index)
+
+
+
+
+router.get("*", async ctx => {
+    await ctx.render("404.pug",{
+        title:"404"
+    })
+})
 
 module.exports = router;
