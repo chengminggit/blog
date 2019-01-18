@@ -4,6 +4,7 @@ const user = require("../control/user.js")
 const article = require("../control/article.js")
 const comment = require("../control/comment.js")
 const admin = require("../control/admin.js")
+const upload = require("../util/upload.js")
 
 const router = new Router();
 
@@ -44,10 +45,23 @@ router.get("/article/:id",user.keepLog,article.details)
 //发表评论
 router.post("/comment",user.keepLog,comment.save)
 
-//文章 评论 头像上传
+//后台管理页面  文章 评论 头像上传
 router.get("/admin/:id",user.keepLog,admin.index)
 
+//头像上传功能
+router.post("/upload",user.keepLog,upload.single("file"),user.upload)
 
+//获取用户的所有评论
+router.get("/user/comments",user.keepLog,comment.comlist)
+
+//删除用户评论
+router.del("/comment/:id",user.keepLog,comment.del)
+
+//获取用户的所有文章
+router.get("/user/articles",user.keepLog,article.artlist)
+
+//删除用户文章
+router.del("/article/:id",user.keepLog,article.del)
 
 
 router.get("*", async ctx => {

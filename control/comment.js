@@ -55,3 +55,66 @@ exports.save = async ctx => {
         })
     ctx.body = message;
 }
+
+//后台 查询用户所有评论
+exports.comlist = async ctx => {
+    const userid = ctx.session.userid;
+
+    const data = await Comment.find({from:userid})
+        .populate("article","title")
+
+    ctx.body = {
+        code:0,
+        count:data.length,
+        data
+    }
+}
+
+//删除用户评论
+exports.del = async ctx => {
+    //评论id
+    const commentId = ctx.params.id;
+
+    let isOk = true;
+
+    //让文章的计数器-1
+    // await Article.update({_id:articleId},{$inc:{commentNum:-1}})
+    // await User.update({_id:userId},{$inc:{commentId:-1}})
+
+    let articleId;
+    let userId;
+
+    //删除评论
+    await Comment.findById(commentId,(err,data) => {
+        if(err){
+            isOk = false;
+            return;
+        }else{
+            articleId = data.article;
+            userId = data.from;
+        }
+    })
+
+    await Article
+        .update({_id:articleId},{$inc:{commentNum:-1}})
+    await User.update({_id:userId},{$inc:{commentNum:-1}})
+
+    await Comment.deleteOne({_id:commentId})
+
+    if(isOk){
+        ctx.body = {
+            state:1,
+            message:"删除成功"
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+

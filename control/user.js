@@ -137,9 +137,13 @@ exports.login = async ctx => {
 exports.keepLog = async (ctx, next) => {
     if(ctx.session.isNew){//session没有
         if(ctx.cookies.get("username")){
+            let userid = ctx.cookies.get("userid")
+            const avatar = await User.findById(userid)
+                .then(data => data.avatar)
             ctx.session = {
                 username:ctx.cookies.get("username"),
-                userid:ctx.cookies.get("userid")
+                userid,
+                avatar
             }
         }
     }
@@ -157,4 +161,30 @@ exports.logout = async ctx => {
     })
     //在后台做重定向到根
     ctx.redirect("/")
+}
+
+//用户的头像上传
+exports.upload = async ctx => {
+    const filename = ctx.req.file.filename;
+
+    let data = {}
+
+    await User.update({_id:ctx.session.userid},{$set:{avatar:"/avatar/"+filename}},
+        (err,res) => {
+            if(err){
+                data = {
+                    status:0,
+                    message:err
+                }
+            }else{
+                data = {
+                    status:1,
+                    message:"上传成功"
+                }
+            }
+        }
+    )
+
+
+    ctx.body = data
 }
