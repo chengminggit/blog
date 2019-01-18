@@ -79,6 +79,8 @@ exports.getList = async ctx => {
         .then(data => data)
         .catch(err => console.log(err))
 
+
+
     await ctx.render("index.pug",{
         session:ctx.session,
         title:"追逐的博客",
@@ -121,3 +123,67 @@ exports.details = async ctx => {
     })
 }
 
+//返回用户所有文章
+exports.artlist = async ctx => {
+    const userid = ctx.session.userid;
+
+    const data = await Article.find({author:userid})
+
+    ctx.body = {
+        code:0,
+        count:data.length,
+        data
+    }
+}
+
+//删除对应id的文章
+exports.del = async ctx => {
+    const _id = ctx.params.id;
+    let userid;
+
+    //用户的articleNum -1
+    //评论删除
+    //被删除评论对应的用户表里的commentNum-1
+    //删除文章
+
+    let res ={};
+
+    await Article.deleteOne({_id}).exec(async err => {
+        if(err){
+            res = {
+                status:0,
+                message:"删除失败"
+            }
+        }else{
+           await Article.findById(_id).then(data => {
+               userid = data.author;
+           })
+        }
+    })
+
+    await User.update({_id:userid},{$inc:{articleNum:-1}})
+
+    //删除所有评论
+    await Comment.find({article:_id}).then(async data => {
+        let len = data.length;
+        let i =0;
+        async function deleteUser() {
+            if(i>=len){
+                return;
+            }
+            const cId = data[i]._id;
+            await Comment.deleteOne({_id:cId}).then(data => {
+                User.update({_id:data[i].from},{$inc:{commentNum:-1}},err =>{
+                    if(err){
+                        return console.log(err)
+                    }
+                    i++;
+                })
+            })
+        }
+
+        await deleteUser();
+    })
+
+    ctx.body = res;
+}
