@@ -1,14 +1,19 @@
-const {db} = require("../Schema/config.js")
+// const {db} = require("../Schema/config.js")
+//
+// const ArticleSchema = require("../Schema/article.js")
+// const Article = db.model("articles",ArticleSchema)
+//
+// //取用户的Schema，为了拿到操作users集合的实例对象
+// const UserSchema = require("../Schema/user.js")
+// const User = db.model("users",UserSchema)
+//
+// const CommentSchema = require("../Schema/comment.js")
+// const Comment = db.model("comments",CommentSchema)
 
-const ArticleSchema = require("../Schema/article.js")
-const Article = db.model("articles",ArticleSchema)
 
-//取用户的Schema，为了拿到操作users集合的实例对象
-const UserSchema = require("../Schema/user.js")
-const User = db.model("users",UserSchema)
-
-const CommentSchema = require("../Schema/comment.js")
-const Comment = db.model("comments",CommentSchema)
+const Article = require("../models/article.js")
+const User = require("../models/user.js")
+const Comment = require("../models/comment.js")
 
 //保存评论
 exports.save = async ctx => {
@@ -75,38 +80,69 @@ exports.del = async ctx => {
     //评论id
     const commentId = ctx.params.id;
 
-    let isOk = true;
+    //重构
 
-    //让文章的计数器-1
-    // await Article.update({_id:articleId},{$inc:{commentNum:-1}})
-    // await User.update({_id:userId},{$inc:{commentId:-1}})
-
-    let articleId;
-    let userId;
-
-    //删除评论
-    await Comment.findById(commentId,(err,data) => {
-        if(err){
-            isOk = false;
-            return;
-        }else{
-            articleId = data.article;
-            userId = data.from;
-        }
-    })
-
-    await Article
-        .update({_id:articleId},{$inc:{commentNum:-1}})
-    await User.update({_id:userId},{$inc:{commentNum:-1}})
-
-    await Comment.deleteOne({_id:commentId})
-
-    if(isOk){
-        ctx.body = {
-            state:1,
-            message:"删除成功"
-        }
+    let res = {
+        state:1,
+        message:"成功"
     }
+
+    //拿到commentID 删除comment
+    await Comment.findById(commentId)
+        .then(data => data.remove())
+        .catch(err => {
+            res = {
+                state:0,
+                message:err
+            }
+        })
+
+    ctx.body = {
+        state:1,
+        message:"成功"
+    }
+
+
+
+
+
+
+
+
+
+
+    // let isOk = true;
+    //
+    // //让文章的计数器-1
+    // // await Article.update({_id:articleId},{$inc:{commentNum:-1}})
+    // // await User.update({_id:userId},{$inc:{commentId:-1}})
+    //
+    // let articleId;
+    // let userId;
+    //
+    // //删除评论
+    // await Comment.findById(commentId,(err,data) => {
+    //     if(err){
+    //         isOk = false;
+    //         return;
+    //     }else{
+    //         articleId = data.article;
+    //         userId = data.from;
+    //     }
+    // })
+    //
+    // await Article
+    //     .update({_id:articleId},{$inc:{commentNum:-1}})
+    // await User.update({_id:userId},{$inc:{commentNum:-1}})
+    //
+    // await Comment.deleteOne({_id:commentId})
+    //
+    // if(isOk){
+    //     ctx.body = {
+    //         state:1,
+    //         message:"删除成功"
+    //     }
+    // }
 }
 
 

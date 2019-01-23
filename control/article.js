@@ -1,14 +1,20 @@
-const {db} = require("../Schema/config.js")
-//通过db对象创建操作article数据库的模型对象
-const ArticleSchema = require("../Schema/article.js")
-const Article = db.model("articles",ArticleSchema)
-//取用户的Schema，为了拿到操作users集合的实例对象
-const UserSchema = require("../Schema/user.js")
-const User = db.model("users",UserSchema)
+// const {db} = require("../Schema/config.js")
+// //通过db对象创建操作article数据库的模型对象
+// const ArticleSchema = require("../Schema/article.js")
+// const Article = db.model("articles",ArticleSchema)
+// //取用户的Schema，为了拿到操作users集合的实例对象
+// const UserSchema = require("../Schema/user.js")
+// const User = db.model("users",UserSchema)
+//
+//
+// const CommentSchema = require("../Schema/comment.js")
+// const Comment = db.model("comments",CommentSchema)
 
 
-const CommentSchema = require("../Schema/comment.js")
-const Comment = db.model("comments",CommentSchema)
+const Article = require("../models/article.js")
+const User = require("../models/user.js")
+const Comment = require("../models/comment.js")
+
 
 //返回文章发表页
 exports.addPage = async (ctx) => {
@@ -139,51 +145,78 @@ exports.artlist = async ctx => {
 //删除对应id的文章
 exports.del = async ctx => {
     const _id = ctx.params.id;
-    let userid;
 
-    //用户的articleNum -1
-    //评论删除
-    //被删除评论对应的用户表里的commentNum-1
-    //删除文章
 
-    let res ={};
+    let res = {
+        state:1,
+        message:"成功"
+    }
 
-    await Article.deleteOne({_id}).exec(async err => {
-        if(err){
+    await Article.findById(_id)
+        .then(data => data.remove())
+        .catch(err => {
             res = {
-                status:0,
-                message:"删除失败"
+                state:0,
+                message:err
             }
-        }else{
-           await Article.findById(_id).then(data => {
-               userid = data.author;
-           })
-        }
-    })
+        })
 
-    await User.update({_id:userid},{$inc:{articleNum:-1}})
-
-    //删除所有评论
-    await Comment.find({article:_id}).then(async data => {
-        let len = data.length;
-        let i =0;
-        async function deleteUser() {
-            if(i>=len){
-                return;
-            }
-            const cId = data[i]._id;
-            await Comment.deleteOne({_id:cId}).then(data => {
-                User.update({_id:data[i].from},{$inc:{commentNum:-1}},err =>{
-                    if(err){
-                        return console.log(err)
-                    }
-                    i++;
-                })
-            })
-        }
-
-        await deleteUser();
-    })
 
     ctx.body = res;
+
+
+
+
+
+
+
+
+
+    // let userid;
+    //
+    // //用户的articleNum -1
+    // //评论删除
+    // //被删除评论对应的用户表里的commentNum-1
+    // //删除文章
+    //
+    // let res ={};
+    //
+    // await Article.deleteOne({_id}).exec(async err => {
+    //     if(err){
+    //         res = {
+    //             status:0,
+    //             message:"删除失败"
+    //         }
+    //     }else{
+    //        await Article.findById(_id).then(data => {
+    //            userid = data.author;
+    //        })
+    //     }
+    // })
+    //
+    // await User.update({_id:userid},{$inc:{articleNum:-1}})
+    //
+    // //删除所有评论
+    // await Comment.find({article:_id}).then(async data => {
+    //     let len = data.length;
+    //     let i =0;
+    //     async function deleteUser() {
+    //         if(i>=len){
+    //             return;
+    //         }
+    //         const cId = data[i]._id;
+    //         await Comment.deleteOne({_id:cId}).then(data => {
+    //             User.update({_id:data[i].from},{$inc:{commentNum:-1}},err =>{
+    //                 if(err){
+    //                     return console.log(err)
+    //                 }
+    //                 i++;
+    //             })
+    //         })
+    //     }
+    //
+    //     await deleteUser();
+    // })
+
+
 }

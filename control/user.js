@@ -1,9 +1,13 @@
-const {db} = require("../Schema/config.js")
-const UserSchema = require("../Schema/user.js")
+// const {db} = require("../Schema/config.js")
+// const UserSchema = require("../Schema/user.js")
 const encrypt = require("../util/encrypt.js")
 
-//通过db对象创建操作user数据库的模型对象
-const User = db.model("users",UserSchema)
+// //通过db对象创建操作user数据库的模型对象
+// const User = db.model("users",UserSchema)
+
+const Article = require("../models/article.js")
+const User = require("../models/user.js")
+const Comment = require("../models/comment.js")
 
 //用户注册
 exports.reg = async ctx => {
